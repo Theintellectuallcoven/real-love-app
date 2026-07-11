@@ -92,6 +92,17 @@ async function fetchPhotos(profileIds, token) {
     if (!byProfile[r.profile_id]) byProfile[r.profile_id] = r.photo_url;
   });
   return byProfile;
+} async function fetchProfilesByIds(profileIds, token) {
+  if (!profileIds.length) return {};
+  const idList = profileIds.join(',');
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?id=in.(${idList})&select=*`,
+    { headers: headers(token) }
+  );
+  const rows = await res.json();
+  const byId = {};
+  (rows || []).forEach(r => { byId[r.id] = r; });
+  return byId;
 }
 
 async function sendLike(likerId, likedId, token) {
@@ -316,7 +327,7 @@ function MatchModal({ profile, onMessage, onKeepBrowsing }) {
         <div style={{ fontFamily: 'Cinzel, serif', color: '#c9a24d', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>THE STARS ALIGNED</div>
         <div style={{ fontFamily: 'Playfair Display, serif', color: '#f2ede2', fontSize: 38, fontWeight: 600, marginBottom: 18 }}>It's a Match</div>
         <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 18px', background: profile.photoUrl ? `center/cover no-repeat url(${profile.photoUrl})` : '#2a1e33', border: '2px solid #c9a24d' }} />
-        <div style={{ color: '#e6e0d4', fontSize: 15, marginBottom: 4, fontFamily: 'Playfair Display, serif' }}>You and {profile.name} liked each other</div>
+s<div style={{ color: '#e6e0d4', fontSize: 15, marginBottom: 4, fontFamily: 'Playfair Display, serif' }}>You and {profile.name} liked each other</div>
         <div style={{ color: '#9d8fa3', fontSize: 12.5, marginBottom: 28 }}>{profile._score}/5 core placements aligned</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: 220, margin: '0 auto' }}>
           <button onClick={() => onMessage(profile)} style={{ background: '#c9a24d', border: 'none', color: '#0a0808', fontFamily: 'Cinzel, serif', fontSize: 13, letterSpacing: 1.5, padding: '12px 0', borderRadius: 3, cursor: 'pointer' }}>SEND A MESSAGE</button>
@@ -423,11 +434,24 @@ export default function RealLoveSwipeApp() {
       const profile = await fetchMyProfile(sess.userId, sess.accessToken);
       setMyProfile(profile);
       const existing = await fetchMyMatches(sess.userId, sess.accessToken);
-      setMatches(existing.map(m => ({
+const partnerIds = existing.map(m => (m.user_a === sess.userId ? m.user_b : m.user_a));
+    const [profileMap, photoMap] = await Promise.all([
+      fetchProfilesByIds(partnerIds, sess.accessToken),
+      fetchPhotos(partnerIds, sess.accessToken),
+    ]);
+    setMatches(existing.map(m => {
+      const partnerId = m.user_a === sess.userId ? m.user_b : m.user_a;
+      const partnerProfile = profileMap[partnerId];
+      const { score } = partnerProfile ? computeMatch(profile, partnerProfile) : { score: 0 };
+      return {
         matchId: m.id,
-        id: m.user_a === sess.userId ? m.user_b : m.user_a,
-        name: 'Match', _score: m.score || 0,
-      })));
+        id: partnerId,
+        name: partnerProfile?.name || 'Match',
+        city: partnerProfile?.city,
+        photoUrl: photoMap[partnerId],
+        _score: score,
+      };
+    }));
     } catch (e) {
       setLoadStatus('error'); setLoadError(e.message);
     }
