@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Lock, Eye, EyeOff, MapPin, Shield, Star, Heart, Camera, X, Plus } from 'lucide-react';
 

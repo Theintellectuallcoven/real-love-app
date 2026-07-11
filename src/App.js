@@ -1,7 +1,7 @@
-import SignupScreen from './SignupScreen';
+import SwipeScreen from './SwipeScreen';
 
 function App() {
-  return <SignupScreen />;
+  return <SwipeScreen />;
 }
 
 export default App;
