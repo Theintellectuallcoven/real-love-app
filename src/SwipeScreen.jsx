@@ -194,7 +194,7 @@ function Crown({ size = 22 }) {
   );
 }
 
-function LoginScreen({ onLogin }) {
+function LoginScreen({ onLogin, onGoToSignup }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState('idle');
@@ -229,7 +229,7 @@ function LoginScreen({ onLogin }) {
           <LogIn size={15} /> {status === 'loading' ? 'SIGNING IN...' : 'SIGN IN'}
         </button>
         <div style={{ color: '#6b6070', fontSize: 11, textAlign: 'center', marginTop: 4 }}>
-          Use the email + password from your Real Love signup.
+          Use the email + password from your Real Love signup.<button onClick={onGoToSignup} style={{ display: 'block', margin: '10px auto 0', background: 'none', border: 'none', color: '#c9a24d', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>Don't have an account? Sign Up</button><button onClick={onGoToSignup} style={{ display: 'block', margin: '10px auto 0', background: 'none', border: 'none', color: '#c9a24d', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>Don't have an account? Sign Up</button><button onClick={onGoToSignup} style={{ display: 'block', margin: '10px auto 0', background: 'none', border: 'none', color: '#c9a24d', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>Don't have an account? Sign Up</button><button onClick={onGoToSignup} style={{ display: 'block', margin: '10px auto 0', background: 'none', border: 'none', color: '#c9a24d', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>Don't have an account? Sign Up</button><button onClick={onGoToSignup} style={{ display: 'block', margin: '10px auto 0', background: 'none', border: 'none', color: '#c9a24d', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>Don't have an account? Sign Up</button>
         </div>
       </div>
     </div>
@@ -247,7 +247,7 @@ function SwipeCard({ profile, onSwipe, isTop, zIndex }) {
     if (!isTop) return;
     if (Math.abs(drag.x) > 110) onSwipe(drag.x > 0 ? 'right' : 'left');
     setDrag({ x: 0, y: 0, active: false });
-  };
+  }; 
 
   const rotate = drag.x / 18;
   const likeOp = Math.min(Math.max(drag.x / 100, 0), 1);
@@ -392,7 +392,7 @@ function ChatScreen({ profile, myId, token, onBack }) {
   );
 }
 
-export default function RealLoveSwipeApp() {
+export default function RealLoveSwipeApp({ onGoToSignup }) {
   const [session, setSession] = useState(null); // { userId, accessToken }
   const [myProfile, setMyProfile] = useState(null);
   const [deck, setDeck] = useState([]);
@@ -488,7 +488,7 @@ const partnerIds = existing.map(m => (m.user_a === sess.userId ? m.user_b : m.us
     setDeck(d => [prev, ...d]);
   };
 
-  if (!session) return <LoginScreen onLogin={handleLogin} />;
+  if (!session) return <LoginScreen onLogin={handleLogin} onGoToSignup={onGoToSignup} />;
 
   if (loadStatus === 'loading' || !myProfile) {
     return (
