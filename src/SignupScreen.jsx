@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Lock, Eye, EyeOff, MapPin, Shield, Star, Heart, Camera, X, Plus } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, MapPin, Shield,  Heart, Camera, X, Plus } from 'lucide-react';
 
 const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const PLANET_FIELDS = [
