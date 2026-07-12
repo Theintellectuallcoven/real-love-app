@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Heart, X, Star, RotateCcw, LogIn } from 'lucide-react';
+import { Heart, X, Star, RotateCcw, LogIn, Info } from 'lucide-react';
 
 const PLANETS = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars'];
 const GLYPH = { Sun: '☉', Moon: '☽', Mercury: '☿', Venus: '♀', Mars: '♂' };
@@ -76,7 +76,7 @@ async function fetchCandidates(userId, token, { maxMiles, minAge, maxAge }) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Could not load matches');
-  return data; // [{ id, name, city, age, distance_miles, sun, moon, mercury, venus, mars }]
+  return data; // [{ id, name, city, age, distance_miles, sun, moon, mercury, venus, mars, bio, hobbies }]
 }
 
 async function fetchPhotos(profileIds, token) {
@@ -236,7 +236,71 @@ function LoginScreen({ onLogin, onGoToSignup }) {
   );
 }
 
-function SwipeCard({ profile, onSwipe, isTop, zIndex }) {
+// ============================================================
+// FULL PROFILE VIEW — opened from the ⓘ button on a card.
+// Shows photo, name/age, city/distance, bio, hobbies, placements.
+// ============================================================
+function ProfileModal({ profile, onClose }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: '#0a0808', zIndex: 60, overflowY: 'auto' }}>
+      <div style={{ maxWidth: 400, margin: '0 auto', minHeight: '100vh', position: 'relative' }}>
+        <button onClick={onClose} style={{
+          position: 'fixed', top: 18, right: 18, zIndex: 61, width: 38, height: 38, borderRadius: '50%',
+          background: 'rgba(10,8,8,0.7)', border: '1px solid rgba(201,162,77,0.5)', color: '#c9a24d',
+          fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>✕</button>
+
+        <div style={{ height: 400, background: profile.photoUrl ? `center/cover no-repeat url(${profile.photoUrl})` : 'linear-gradient(160deg,#2a1e33,#4a2f3d)', position: 'relative' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0a0808, rgba(10,8,8,0) 45%)' }} />
+          <div style={{ position: 'absolute', bottom: 14, left: 22, right: 22 }}>
+            <div style={{ fontFamily: 'Playfair Display, serif', color: '#f2ede2', fontSize: 30, fontWeight: 600 }}>{profile.name}{profile.age ? `, ${profile.age}` : ''}</div>
+            <div style={{ color: '#9d8fa3', fontSize: 13, marginTop: 2 }}>{profile.city}{profile.distance_miles != null ? ` · ${profile.distance_miles} mi away` : ''}</div>
+          </div>
+        </div>
+
+        <div style={{ padding: '18px 22px 46px' }}>
+          <div style={{ fontFamily: 'Cinzel, serif', color: '#c9a24d', fontSize: 11, letterSpacing: 2 }}>
+            {matchLabel(profile._score).toUpperCase()} · {profile._score}/5 ALIGNED
+          </div>
+
+          {profile.bio && (
+            <div style={{ marginTop: 24 }}>
+              <div style={{ fontFamily: 'Cinzel, serif', color: '#c9a24d', fontSize: 11, letterSpacing: 2, marginBottom: 8 }}>ABOUT</div>
+              <div style={{ fontFamily: 'Playfair Display, serif', color: '#e6e0d4', fontSize: 15, lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{profile.bio}</div>
+            </div>
+          )}
+
+          {profile.hobbies && profile.hobbies.length > 0 && (
+            <div style={{ marginTop: 24 }}>
+              <div style={{ fontFamily: 'Cinzel, serif', color: '#c9a24d', fontSize: 11, letterSpacing: 2, marginBottom: 10 }}>HOBBIES</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {profile.hobbies.map(h => (
+                  <span key={h} style={{ border: '1px solid rgba(201,162,77,0.45)', color: '#e0bd6f', borderRadius: 20, padding: '5px 13px', fontSize: 12 }}>{h}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {profile._breakdown && (
+            <div style={{ marginTop: 24 }}>
+              <div style={{ fontFamily: 'Cinzel, serif', color: '#c9a24d', fontSize: 11, letterSpacing: 2, marginBottom: 10 }}>PLACEMENTS</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {profile._breakdown.map(b => (
+                  <div key={b.planet} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 13 }}>
+                    <span style={{ color: '#e6e0d4' }}>{GLYPH[b.planet]} {b.category}</span>
+                    <span style={{ color: b.hit ? '#c9a24d' : '#7a6d80', fontSize: 12 }}>{b.matchSign || '—'} · {b.hit ? '✓ aligned' : '○ friction'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SwipeCard({ profile, onSwipe, isTop, zIndex, onViewProfile }) {
   const [drag, setDrag] = useState({ x: 0, y: 0, active: false });
   const [expanded, setExpanded] = useState(false);
   const startRef = useRef({ x: 0, y: 0 });
@@ -287,6 +351,18 @@ function SwipeCard({ profile, onSwipe, isTop, zIndex }) {
           borderRadius: 20, padding: '6px 14px', color: '#e0bd6f', fontFamily: 'Cinzel, serif', fontSize: 13, cursor: 'pointer',
         }}>{profile._score}/5</button>
 
+        <button
+          onClick={(e) => { e.stopPropagation(); onViewProfile(profile); }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          style={{
+            position: 'absolute', top: 62, right: 20, width: 32, height: 32, borderRadius: '50%',
+            background: 'rgba(10,8,8,0.55)', border: '1px solid rgba(201,162,77,0.5)', color: '#e0bd6f',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          }}
+          title={`View ${profile.name}'s profile`}
+        ><Info size={16} /></button>
+
         <div style={{ padding: '20px 22px 24px', background: 'linear-gradient(to top, rgba(8,6,8,0.94), rgba(8,6,8,0.05) 70%)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <div style={{ fontFamily: 'Playfair Display, serif', color: '#f2ede2', fontSize: 26, fontWeight: 600 }}>{profile.name}{profile.age ? `, ${profile.age}` : ''}</div>
@@ -327,7 +403,7 @@ function MatchModal({ profile, onMessage, onKeepBrowsing }) {
         <div style={{ fontFamily: 'Cinzel, serif', color: '#c9a24d', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>THE STARS ALIGNED</div>
         <div style={{ fontFamily: 'Playfair Display, serif', color: '#f2ede2', fontSize: 38, fontWeight: 600, marginBottom: 18 }}>It's a Match</div>
         <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 18px', background: profile.photoUrl ? `center/cover no-repeat url(${profile.photoUrl})` : '#2a1e33', border: '2px solid #c9a24d' }} />
-s<div style={{ color: '#e6e0d4', fontSize: 15, marginBottom: 4, fontFamily: 'Playfair Display, serif' }}>You and {profile.name} liked each other</div>
+        <div style={{ color: '#e6e0d4', fontSize: 15, marginBottom: 4, fontFamily: 'Playfair Display, serif' }}>You and {profile.name} liked each other</div>
         <div style={{ color: '#9d8fa3', fontSize: 12.5, marginBottom: 28 }}>{profile._score}/5 core placements aligned</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: 220, margin: '0 auto' }}>
           <button onClick={() => onMessage(profile)} style={{ background: '#c9a24d', border: 'none', color: '#0a0808', fontFamily: 'Cinzel, serif', fontSize: 13, letterSpacing: 1.5, padding: '12px 0', borderRadius: 3, cursor: 'pointer' }}>SEND A MESSAGE</button>
@@ -406,6 +482,7 @@ export default function RealLoveSwipeApp({ onGoToSignup }) {
   const [matchedProfile, setMatchedProfile] = useState(null);
   const [matches, setMatches] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
+  const [viewingProfile, setViewingProfile] = useState(null);
 
   const loadDeck = async (dist, ages) => {
     if (!session || !myProfile) return;
@@ -568,7 +645,7 @@ const partnerIds = existing.map(m => (m.user_a === sess.userId ? m.user_b : m.us
           </div>
         )}
         {deck.slice(0, 3).reverse().map((profile, i, arr) => (
-          <SwipeCard key={profile.id} profile={profile} isTop={i === arr.length - 1} zIndex={i} onSwipe={swipe} />
+          <SwipeCard key={profile.id} profile={profile} isTop={i === arr.length - 1} zIndex={i} onSwipe={swipe} onViewProfile={setViewingProfile} />
         ))}
       </div>
 
@@ -581,6 +658,7 @@ const partnerIds = existing.map(m => (m.user_a === sess.userId ? m.user_b : m.us
 
       {matchedProfile && <MatchModal profile={matchedProfile} onMessage={(p) => { setMatchedProfile(null); setActiveChat(p); }} onKeepBrowsing={() => setMatchedProfile(null)} />}
       {activeChat && <ChatScreen profile={activeChat} myId={session.userId} token={session.accessToken} onBack={() => setActiveChat(null)} />}
+      {viewingProfile && <ProfileModal profile={viewingProfile} onClose={() => setViewingProfile(null)} />}
     </div>
   );
 }
