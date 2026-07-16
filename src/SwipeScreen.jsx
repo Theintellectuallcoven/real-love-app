@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Heart, X, Star, RotateCcw, LogIn, Info } from 'lucide-react';
+import { Heart, X, Star, RotateCcw, LogIn, Info, LogOut } from 'lucide-react';
 
 const PLANETS = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars'];
 const GLYPH = { Sun: '☉', Moon: '☽', Mercury: '☿', Venus: '♀', Mars: '♂' };
@@ -55,6 +55,19 @@ async function signIn(email, password) {
   return { userId: data.user.id, accessToken: data.access_token };
 }
 
+// Tells Supabase to invalidate the token server-side. Best-effort:
+// even if this call fails, the app still clears local state on logout.
+async function signOutRequest(token) {
+  try {
+    await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+      method: 'POST',
+      headers: headers(token),
+    });
+  } catch (e) {
+    // Ignore — local sign-out proceeds regardless.
+  }
+}
+
 async function fetchMyProfile(userId, token) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=*`, { headers: headers(token) });
   const rows = await res.json();
@@ -92,7 +105,9 @@ async function fetchPhotos(profileIds, token) {
     if (!byProfile[r.profile_id]) byProfile[r.profile_id] = r.photo_url;
   });
   return byProfile;
-} async function fetchProfilesByIds(profileIds, token) {
+}
+
+async function fetchProfilesByIds(profileIds, token) {
   if (!profileIds.length) return {};
   const idList = profileIds.join(',');
   const res = await fetch(
@@ -311,7 +326,7 @@ function SwipeCard({ profile, onSwipe, isTop, zIndex, onViewProfile }) {
     if (!isTop) return;
     if (Math.abs(drag.x) > 110) onSwipe(drag.x > 0 ? 'right' : 'left');
     setDrag({ x: 0, y: 0, active: false });
-  }; 
+  };
 
   const rotate = drag.x / 18;
   const likeOp = Math.min(Math.max(drag.x / 100, 0), 1);
@@ -358,23 +373,23 @@ function SwipeCard({ profile, onSwipe, isTop, zIndex, onViewProfile }) {
           style={{
             position: 'absolute', top: 62, right: 20, width: 32, height: 32, borderRadius: '50%',
             background: 'rgba(10,8,8,0.55)', border: '1px solid rgba(201,162,77,0.5)', color: '#e0bd6f',
-            display: 'flex', alignItems: 'center', t: 'center', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
           }}
           title={`View ${profile.name}'s profile`}
         ><Info size={16} /></button>
 
         <div style={{ padding: '20px 22px 24px', background: 'linear-gradient(to top, rgba(8,6,8,0.94), rgba(8,6,8,0.05) 70%)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10 }}>
             <div style={{ fontFamily: 'Playfair Display, serif', color: '#f2ede2', fontSize: 26, fontWeight: 600 }}>{profile.name}{profile.age ? `, ${profile.age}` : ''}</div>
             <div style={{
-            fontFamily: 'Cinzel, serif', color: '#f0d799', fontSize: 10, letterSpacing: 1.5,
-            fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0,
-            background: 'rgba(10,8,8,0.72)', border: '1px solid rgba(201,162,77,0.45)',
-            borderRadius: 20, padding: '4px 10px',
-            
-          }}>{matchLabel(profile._score).toUpperCase()}</div>
-          
-          <div style={{ color: '#9d8fa3', fontSize: 12.5, marginTop: 2 }}>{profile.city}{profile.distance_miles != null ? ` · ${profile.distance_miles} mi away` : ''}</div>
+              fontFamily: 'Cinzel, serif', color: '#f0d799', fontSize: 10, letterSpacing: 1.5,
+              fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0,
+              background: 'rgba(10,8,8,0.72)', border: '1px solid rgba(201,162,77,0.45)',
+              borderRadius: 20, padding: '4px 10px',
+            }}>{matchLabel(profile._score).toUpperCase()}</div>
+          </div>
+
+          <div style={{ color: '#d8cfd8', fontSize: 12.5, marginTop: 2, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>{profile.city}{profile.distance_miles != null ? ` · ${profile.distance_miles} mi away` : ''}</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginTop: 14 }}>
             {profile._breakdown.map(b => (
@@ -504,7 +519,7 @@ export default function RealLoveSwipeApp({ onGoToSignup }) {
       }).sort((a, b) => b._score - a._score);
       setDeck(scored);
       setHistory([]);
-      setTierBanner(scored[0] ? `Showing your ${scored[0]._score}/5 matches` : 'No matches in this range yet');
+     setTierBanner(scored[0] ? `${scored[0]._score}/5 placements aligned` : 'No profiles in this range yet'); 
       setLoadStatus('success');
     } catch (e) {
       setLoadStatus('error'); setLoadError(e.message);
@@ -517,27 +532,44 @@ export default function RealLoveSwipeApp({ onGoToSignup }) {
       const profile = await fetchMyProfile(sess.userId, sess.accessToken);
       setMyProfile(profile);
       const existing = await fetchMyMatches(sess.userId, sess.accessToken);
-const partnerIds = existing.map(m => (m.user_a === sess.userId ? m.user_b : m.user_a));
-    const [profileMap, photoMap] = await Promise.all([
-      fetchProfilesByIds(partnerIds, sess.accessToken),
-      fetchPhotos(partnerIds, sess.accessToken),
-    ]);
-    setMatches(existing.map(m => {
-      const partnerId = m.user_a === sess.userId ? m.user_b : m.user_a;
-      const partnerProfile = profileMap[partnerId];
-      const { score } = partnerProfile ? computeMatch(profile, partnerProfile) : { score: 0 };
-      return {
-        matchId: m.id,
-        id: partnerId,
-        name: partnerProfile?.name || 'Match',
-        city: partnerProfile?.city,
-        photoUrl: photoMap[partnerId],
-        _score: score,
-      };
-    }));
+      const partnerIds = existing.map(m => (m.user_a === sess.userId ? m.user_b : m.user_a));
+      const [profileMap, photoMap] = await Promise.all([
+        fetchProfilesByIds(partnerIds, sess.accessToken),
+        fetchPhotos(partnerIds, sess.accessToken),
+      ]);
+      setMatches(existing.map(m => {
+        const partnerId = m.user_a === sess.userId ? m.user_b : m.user_a;
+        const partnerProfile = profileMap[partnerId];
+        const { score } = partnerProfile ? computeMatch(profile, partnerProfile) : { score: 0 };
+        return {
+          matchId: m.id,
+          id: partnerId,
+          name: partnerProfile?.name || 'Match',
+          city: partnerProfile?.city,
+          photoUrl: photoMap[partnerId],
+          _score: score,
+        };
+      }));
     } catch (e) {
       setLoadStatus('error'); setLoadError(e.message);
     }
+  };
+
+  // Clears every piece of user state so the next person to sign in on this
+  // device never sees the previous user's deck, matches, or chats.
+  const handleLogout = async () => {
+    if (session) await signOutRequest(session.accessToken);
+    setSession(null);
+    setMyProfile(null);
+    setDeck([]);
+    setHistory([]);
+    setMatches([]);
+    setActiveChat(null);
+    setMatchedProfile(null);
+    setViewingProfile(null);
+    setTierBanner('');
+    setLoadStatus('idle');
+    setLoadError('');
   };
 
   useEffect(() => {
@@ -551,7 +583,7 @@ const partnerIds = existing.map(m => (m.user_a === sess.userId ? m.user_b : m.us
     setHistory(h => [...h, current]);
     setDeck(rest);
     if (rest[0] && rest[0]._score !== current._score) {
-      setTierBanner(`Now showing your ${rest[0]._score}/5 matches`);
+      setTierBanner(`${rest[0]._score}/5 placements aligned`);
     }
     if (dir === 'right') {
       await sendLike(session.userId, current.id, session.accessToken);
@@ -593,11 +625,25 @@ const partnerIds = existing.map(m => (m.user_a === sess.userId ? m.user_b : m.us
   }
 
   return (
-    <div style={{ minHeight: '100vh', width: '100%', background: '#0a0808', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '30px 16px 40px', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ position: 'relative', minHeight: '100vh', width: '100%', background: '#0a0808', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '30px 16px 40px', fontFamily: 'system-ui, sans-serif' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap');
         @keyframes wheelspin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
+
+      <button
+        onClick={handleLogout}
+        title="Log out"
+        style={{
+          position: 'absolute', top: 18, right: 18, zIndex: 10,
+          display: 'flex', alignItems: 'center', gap: 6,
+          background: 'transparent', border: '1px solid rgba(201,162,77,0.4)',
+          borderRadius: 20, padding: '6px 13px', color: '#c9a24d',
+          fontFamily: 'Cinzel, serif', fontSize: 10, letterSpacing: 1, cursor: 'pointer',
+        }}
+      >
+        <LogOut size={13} /> LOG OUT
+      </button>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
         <Crown size={26} />
