@@ -15,6 +15,15 @@ const MIN_AGE = 35;
 const MAX_PHOTOS = 5;
 const STEPS = ['Account', 'About You', 'Your Chart', 'Your Profile'];
 
+// Gender options. `seeking` is derived from this (opposite gender) rather than
+// asked separately — one less question at signup. The profiles.seeking column
+// is still an array, so adding a second question later is a UI change only.
+const GENDER_OPTIONS = [
+  { value: 'woman', label: 'Woman' },
+  { value: 'man', label: 'Man' },
+];
+const oppositeOf = (gender) => (gender === 'man' ? ['woman'] : ['man']);
+
 // Draft copy — have this reviewed before treating it as final legal language.
 const COMMUNITY_GUIDELINES = [
   { title: 'Be respectful', body: 'Treat every member the way you\u2019d want to be treated. No harassment, hate speech, threats, or degrading language, ever.' },
@@ -78,6 +87,8 @@ async function realSubmit(form) {
       city: form.city,
       latitude: form.latitude,
       longitude: form.longitude,
+      gender: form.gender,
+      seeking: oppositeOf(form.gender),
       tagline: form.tagline,
       bio: form.bio,
       hobbies: form.hobbies,
@@ -346,6 +357,7 @@ export default function SignupScreen() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
     name: '', email: '', password: '', birthDate: '', birthTime: '', city: '', tagline: '',
+    gender: '',
     sun: '', moon: '', mercury: '', venus: '', mars: '',
     latitude: null, longitude: null,
     bio: '', hobbies: [], photos: [], // photos: array of { dataUrl, file } for preview + upload
@@ -366,7 +378,7 @@ export default function SignupScreen() {
 
   const stepValid = [
     form.name && form.email && form.password.length >= 6 && agreedToGuidelines,
-    form.birthDate && !underAge && form.city,
+    form.birthDate && !underAge && form.city && form.gender,
     allPlanetsSet,
     form.bio.trim().length > 0 && form.photos.length > 0, // at least a bio + 1 photo required; hobbies optional
   ];
@@ -592,6 +604,37 @@ export default function SignupScreen() {
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <CardHeading>Tell us about you</CardHeading>
+
+              <PlainField label="I am">
+                <div style={{ display: 'flex', gap: 10 }}>
+                  {GENDER_OPTIONS.map(opt => {
+                    const selected = form.gender === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => update('gender', opt.value)}
+                        style={{
+                          flex: 1,
+                          background: selected ? 'linear-gradient(135deg, #e8c37a, #a97f2e)' : 'transparent',
+                          border: `1px solid ${selected ? JEWEL.gold : 'rgba(201,162,77,0.35)'}`,
+                          color: selected ? '#0a0808' : '#e6e0d4',
+                          fontFamily: 'Cinzel, serif', fontSize: 12, letterSpacing: 1.5,
+                          padding: '13px 0', borderRadius: 6, cursor: 'pointer',
+                        }}
+                      >
+                        {opt.label.toUpperCase()}
+                      </button>
+                    );
+                  })}
+                </div>
+              </PlainField>
+              {form.gender && (
+                <div style={{ fontSize: 11, color: '#6b6070', marginTop: -10, lineHeight: 1.5 }}>
+                  You'll see {form.gender === 'man' ? 'women' : 'men'} in your deck, and you'll only appear in theirs.
+                </div>
+              )}
+
               <PlainField label="Birth date">
                 <input style={inputStyle} type="date" value={form.birthDate} onChange={e => update('birthDate', e.target.value)} />
               </PlainField>
