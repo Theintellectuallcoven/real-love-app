@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Heart, X, Star, RotateCcw, LogIn, Info, LogOut } from 'lucide-react';
+import SettingsScreen from './SettingsScreen';
 
 const PLANETS = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars'];
 const GLYPH = { Sun: '☉', Moon: '☽', Mercury: '☿', Venus: '♀', Mars: '♂' };
@@ -265,18 +266,27 @@ function ProfileModal({ profile, onClose }) {
           fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>✕</button>
 
-        <div style={{ height: 400, background: profile.photoUrl ? `center/cover no-repeat url(${profile.photoUrl})` : 'linear-gradient(160deg,#2a1e33,#4a2f3d)', position: 'relative' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0a0808, rgba(10,8,8,0) 45%)' }} />
-          <div style={{ position: 'absolute', bottom: 14, left: 22, right: 22 }}>
-            <div style={{ fontFamily: 'Playfair Display, serif', color: '#f2ede2', fontSize: 30, fontWeight: 600 }}>{profile.name}{profile.age ? `, ${profile.age}` : ''}</div>
-            <div style={{ color: '#9d8fa3', fontSize: 13, marginTop: 2 }}>{profile.city}{profile.distance_miles != null ? ` · ${profile.distance_miles} mi away` : ''}</div>
+        <div style={{ padding: '34px 22px 0', position: 'relative' }}>
+          <div style={{ position: 'relative', border: '2px solid #c9a24d', borderRadius: 6, padding: 7, boxShadow: '0 0 24px rgba(201,162,77,0.25)' }}>
+            <div style={{ position: 'absolute', top: -19, left: '50%', transform: 'translateX(-50%)', zIndex: 2, background: '#0a0808', padding: '0 12px' }}>
+              <Crown size={34} />
+            </div>
+            <div style={{ height: 400, borderRadius: 3, border: '1px solid rgba(201,162,77,0.55)', overflow: 'hidden', position: 'relative', background: profile.photoUrl ? `center/cover no-repeat url(${profile.photoUrl})` : 'linear-gradient(160deg,#2a1e33,#4a2f3d)' }}>
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0a0808, rgba(10,8,8,0) 45%)' }} />
+              <div style={{ position: 'absolute', bottom: 14, left: 22, right: 22 }}>
+                <div style={{ fontFamily: 'Playfair Display, serif', color: '#f2ede2', fontSize: 30, fontWeight: 600 }}>{profile.name}{profile.age ? `, ${profile.age}` : ''}</div>
+                <div style={{ color: '#9d8fa3', fontSize: 13, marginTop: 2 }}>{profile.city}{profile.distance_miles != null ? ` · ${profile.distance_miles} mi away` : ''}</div>
+              </div>
+            </div>
           </div>
         </div>
 
         <div style={{ padding: '18px 22px 46px' }}>
-          <div style={{ fontFamily: 'Cinzel, serif', color: '#c9a24d', fontSize: 11, letterSpacing: 2 }}>
-            {matchLabel(profile._score).toUpperCase()} · {profile._score}/5 ALIGNED
-          </div>
+        {!profile._isMe && (
+            <div style={{ fontFamily: 'Cinzel, serif', color: '#c9a24d', fontSize: 11, letterSpacing: 2 }}>
+              {matchLabel(profile._score).toUpperCase()} · {profile._score}/5 ALIGNED
+            </div>
+          )}
 
           {profile.bio && (
             <div style={{ marginTop: 24 }}>
@@ -348,10 +358,13 @@ function SwipeCard({ profile, onSwipe, isTop, zIndex, onViewProfile }) {
         cursor: isTop ? (drag.active ? 'grabbing' : 'grab') : 'default', touchAction: 'none',
       }}
     >
+    <div style={{ position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)', zIndex: 5, background: '#0a0808', padding: '0 12px' }}>
+        <Crown size={28} />
+      </div>
       <div style={{
         width: '100%', height: '100%', borderRadius: 4, overflow: 'hidden', position: 'relative',
         background: profile.photoUrl ? `center/cover no-repeat url(${profile.photoUrl})` : 'linear-gradient(160deg,#2a1e33,#4a2f3d)',
-        border: '1px solid rgba(201,162,77,0.3)', boxShadow: '0 24px 70px rgba(0,0,0,0.6)',
+        border: '2px solid #c9a24d', boxShadow: '0 0 24px rgba(201,162,77,0.3), 0 24px 70px rgba(0,0,0,0.6)',
         display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
       }}>
         <div style={{ position: 'absolute', top: '8%', left: '50%', transform: 'translateX(-50%)' }}>
@@ -504,6 +517,7 @@ export default function RealLoveSwipeApp({ onGoToSignup }) {
   const [matches, setMatches] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [viewingProfile, setViewingProfile] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   const loadDeck = async (dist, ages) => {
     if (!session || !myProfile) return;
@@ -595,7 +609,10 @@ export default function RealLoveSwipeApp({ onGoToSignup }) {
       }
     }
   };
-
+const viewMyProfile = async () => {
+    const photoMap = await fetchPhotos([session.userId], session.accessToken);
+    setViewingProfile({ ...myProfile, photoUrl: photoMap[session.userId], _isMe: true });
+  };
   const undo = () => {
     if (!history.length) return;
     const prev = history[history.length - 1];
@@ -644,6 +661,18 @@ export default function RealLoveSwipeApp({ onGoToSignup }) {
       >
         <LogOut size={13} /> LOG OUT
       </button>
+    <button
+        onClick={() => setShowSettings(true)}
+        title="Settings"
+        style={{
+          position: 'absolute', top: 18, right: 120, zIndex: 10,
+          background: 'transparent', border: '1px solid rgba(201,162,77,0.4)',
+          borderRadius: 20, padding: '6px 13px', color: '#c9a24d',
+          fontFamily: 'Cinzel, serif', fontSize: 10, letterSpacing: 1, cursor: 'pointer',
+        }}
+      >
+        ⚙ SETTINGS
+      </button>  
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
         <Crown size={26} />
@@ -655,6 +684,8 @@ export default function RealLoveSwipeApp({ onGoToSignup }) {
 
       <button onClick={() => setShowFilters(s => !s)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px solid rgba(201,162,77,0.4)', borderRadius: 20, padding: '6px 16px', color: '#c9a24d', fontFamily: 'Cinzel, serif', fontSize: 10.5, letterSpacing: 1, cursor: 'pointer', marginBottom: 14 }}>
         ⚙ FILTERS · {maxDistance} MI · AGE {ageRange[0]}–{ageRange[1]}
+      </button><button onClick={viewMyProfile} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px solid rgba(201,162,77,0.4)', borderRadius: 20, padding: '6px 16px', color: '#c9a24d', fontFamily: 'Cinzel, serif', fontSize: 10.5, letterSpacing: 1, cursor: 'pointer', marginBottom: 14 }}>
+        ♔ MY PROFILE
       </button>
 
       {showFilters && (
@@ -711,6 +742,14 @@ export default function RealLoveSwipeApp({ onGoToSignup }) {
       {matchedProfile && <MatchModal profile={matchedProfile} onMessage={(p) => { setMatchedProfile(null); setActiveChat(p); }} onKeepBrowsing={() => setMatchedProfile(null)} />}
       {activeChat && <ChatScreen profile={activeChat} myId={session.userId} token={session.accessToken} onBack={() => setActiveChat(null)} />}
       {viewingProfile && <ProfileModal profile={viewingProfile} onClose={() => setViewingProfile(null)} />}
+        {showSettings && (
+        <SettingsScreen
+          userId={session.userId}
+          accessToken={session.accessToken}
+          onBack={() => setShowSettings(false)}
+          onLoggedOut={() => { setShowSettings(false); handleLogout(); }}
+        />
+      )}
     </div>
   );
 }
