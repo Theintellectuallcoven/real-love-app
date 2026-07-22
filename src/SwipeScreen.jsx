@@ -665,7 +665,7 @@ const viewMyProfile = async () => {
         onClick={() => setShowSettings(true)}
         title="Settings"
         style={{
-          position: 'absolute', top: 18, right: 120, zIndex: 10,
+          position: 'absolute', top: 18, left: 18, zIndex: 10,
           background: 'transparent', border: '1px solid rgba(201,162,77,0.4)',
           borderRadius: 20, padding: '6px 13px', color: '#c9a24d',
           fontFamily: 'Cinzel, serif', fontSize: 10, letterSpacing: 1, cursor: 'pointer',

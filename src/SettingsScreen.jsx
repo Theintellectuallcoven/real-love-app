@@ -20,6 +20,8 @@ export default function SettingsScreen({ userId, accessToken, onBack, onLoggedOu
   const [heightFeet, setHeightFeet] = useState('');
   const [heightInches, setHeightInches] = useState('');
   const [maxDistance, setMaxDistance] = useState(100);
+  const [minAge, setMinAge] = useState(35);
+  const [maxAge, setMaxAge] = useState(65);
   const [deleteText, setDeleteText] = useState('');
   const [showDelete, setShowDelete] = useState(false);
 
@@ -38,7 +40,7 @@ export default function SettingsScreen({ userId, accessToken, onBack, onLoggedOu
     setLoading(true);
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=bio,height_feet,height_inches,max_distance`,
+        `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=bio,height_feet,height_inches,max_distance,min_age,max_age`,
         { headers }
       );
       const rows = await res.json();
@@ -48,6 +50,9 @@ export default function SettingsScreen({ userId, accessToken, onBack, onLoggedOu
         setHeightFeet(p.height_feet ?? '');
         setHeightInches(p.height_inches ?? '');
         setMaxDistance(p.max_distance ?? 100);
+        
+        setMinAge(p.min_age ?? 35);
+        setMaxAge(p.max_age ?? 65);
       }
     } catch (err) {
       setStatus("Couldn't load your profile. Check your connection and try again.");
@@ -67,6 +72,8 @@ export default function SettingsScreen({ userId, accessToken, onBack, onLoggedOu
           height_feet: heightFeet === '' ? null : Number(heightFeet),
           height_inches: heightInches === '' ? null : Number(heightInches),
           max_distance: Number(maxDistance),
+          min_age: Number(minAge),
+          max_age: Number(maxAge),
         }),
       });
       if (!res.ok) {
@@ -166,6 +173,17 @@ export default function SettingsScreen({ userId, accessToken, onBack, onLoggedOu
                 onChange={(e) => setMaxDistance(e.target.value)}
                 style={{ width: '100%', accentColor: GOLD }}
               />
+              <label style={styles.fieldLabel}>
+                Age range — <span style={{ color: GOLD }}>{minAge}–{maxAge}</span>
+              </label>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <input type="range" min={35} max={80} value={minAge}
+                  onChange={(e) => setMinAge(Math.min(Number(e.target.value), maxAge))}
+                  style={{ flex: 1, accentColor: GOLD }} />
+                <input type="range" min={35} max={80} value={maxAge}
+                  onChange={(e) => setMaxAge(Math.max(Number(e.target.value), minAge))}
+                  style={{ flex: 1, accentColor: GOLD }} />
+              </div>
             </section>
 
             <button style={styles.saveBtn} onClick={saveProfile} disabled={saving}>
