@@ -276,6 +276,9 @@ function ProfileModal({ profile, onClose }) {
               <div style={{ position: 'absolute', bottom: 14, left: 22, right: 22 }}>
                 <div style={{ fontFamily: 'Playfair Display, serif', color: '#f2ede2', fontSize: 30, fontWeight: 600 }}>{profile.name}{profile.age ? `, ${profile.age}` : ''}</div>
                 <div style={{ color: '#9d8fa3', fontSize: 13, marginTop: 2 }}>{profile.city}{profile.distance_miles != null ? ` · ${profile.distance_miles} mi away` : ''}</div>
+                {profile.height && (
+  <div style={{ color: '#e0bd6f', fontSize: 12.5, marginTop: 3, letterSpacing: 0.3 }}>↕ {profile.height}</div>
+)}
               </div>
             </div>
           </div>
