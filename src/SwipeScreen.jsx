@@ -683,28 +683,9 @@ const viewMyProfile = async () => {
         Welcome back, {myProfile.name}
       </div>
 
-      <button onClick={() => setShowFilters(s => !s)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px solid rgba(201,162,77,0.4)', borderRadius: 20, padding: '6px 16px', color: '#c9a24d', fontFamily: 'Cinzel, serif', fontSize: 10.5, letterSpacing: 1, cursor: 'pointer', marginBottom: 14 }}>
-        ⚙ FILTERS · {maxDistance} MI · AGE {ageRange[0]}–{ageRange[1]}
-      </button><button onClick={viewMyProfile} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px solid rgba(201,162,77,0.4)', borderRadius: 20, padding: '6px 16px', color: '#c9a24d', fontFamily: 'Cinzel, serif', fontSize: 10.5, letterSpacing: 1, cursor: 'pointer', marginBottom: 14 }}>
+      <button onClick={viewMyProfile} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px solid rgba(201,162,77,0.4)', borderRadius: 20, padding: '6px 16px', color: '#c9a24d', fontFamily: 'Cinzel, serif', fontSize: 10.5, letterSpacing: 1, cursor: 'pointer', marginBottom: 14 }}>
         ♔ MY PROFILE
       </button>
-
-      {showFilters && (
-        <div style={{ width: 320, background: 'rgba(21,15,19,0.9)', border: '1px solid rgba(201,162,77,0.3)', borderRadius: 8, padding: '18px 20px', marginBottom: 16 }}>
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#e6e0d4', fontSize: 12.5, marginBottom: 6 }}><span>Distance</span><span style={{ color: '#c9a24d' }}>Up to {maxDistance} mi</span></div>
-            <input type="range" min="5" max="100" step="5" value={maxDistance} onChange={e => setMaxDistance(Number(e.target.value))} style={{ width: '100%', accentColor: '#c9a24d' }} />
-          </div>
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#e6e0d4', fontSize: 12.5, marginBottom: 6 }}><span>Age range</span><span style={{ color: '#c9a24d' }}>{ageRange[0]}–{ageRange[1]}</span></div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <input type="range" min="35" max="80" value={ageRange[0]} onChange={e => setAgeRange([Math.min(Number(e.target.value), ageRange[1]), ageRange[1]])} style={{ flex: 1, accentColor: '#c9a24d' }} />
-              <input type="range" min="35" max="80" value={ageRange[1]} onChange={e => setAgeRange([ageRange[0], Math.max(Number(e.target.value), ageRange[0])])} style={{ flex: 1, accentColor: '#c9a24d' }} />
-            </div>
-          </div>
-          <button onClick={() => { loadDeck(maxDistance, ageRange); setShowFilters(false); }} style={{ width: '100%', background: 'linear-gradient(135deg, #e8c37a, #a97f2e)', border: 'none', color: '#0a0808', fontFamily: 'Cinzel, serif', fontSize: 12, letterSpacing: 1.5, padding: '10px 0', borderRadius: 3, cursor: 'pointer' }}>APPLY FILTERS</button>
-        </div>
-      )}
 
       {matches.length > 0 && (
         <div style={{ display: 'flex', gap: 10, marginBottom: 18 }}>
