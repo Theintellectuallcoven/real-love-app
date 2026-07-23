@@ -3,7 +3,7 @@ import { Heart, X, Star, RotateCcw, LogIn, Info, LogOut } from 'lucide-react';
 import SettingsScreen from './SettingsScreen';
 
 const PLANETS = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars'];
-const GLYPH = { Sun: 'â˜‰', Moon: 'â˜½', Mercury: 'â˜¿', Venus: 'â™€', Mars: 'â™‚' };
+const GLYPH = { Sun: '☉', Moon: '☽', Mercury: '☿', Venus: '♀', Mars: '♂' };
 const CATEGORY = {
   Sun: 'Core Connection', Moon: 'Emotional Bond', Mercury: 'Mental Stimulation',
   Venus: 'Romantic Chemistry', Mars: 'Physical Chemistry',
@@ -34,7 +34,7 @@ function matchLabel(score) {
 }
 
 // ============================================================
-// SUPABASE WIRING â€” same project as the signup screen.
+// SUPABASE WIRING — same project as the signup screen.
 // ============================================================
 const SUPABASE_URL = 'https://rwfuttkhagijvfnphzus.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_HfNzNy0SfOOEdfbavPdrPw_KPdPPlu_';
@@ -65,7 +65,7 @@ async function signOutRequest(token) {
       headers: headers(token),
     });
   } catch (e) {
-    // Ignore â€” local sign-out proceeds regardless.
+    // Ignore — local sign-out proceeds regardless.
   }
 }
 
@@ -76,7 +76,7 @@ async function fetchMyProfile(userId, token) {
   return rows[0];
 }
 
-// Uses the nearby_profiles() Postgres function â€” real distance + age filtering.
+// Uses the nearby_profiles() Postgres function — real distance + age filtering.
 async function fetchCandidates(userId, token, { maxMiles, minAge, maxAge }) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/nearby_profiles`, {
     method: 'POST',
@@ -129,7 +129,7 @@ async function sendLike(likerId, likedId, token) {
   });
 }
 
-// The `check_mutual_like` trigger creates the matches row automatically â€”
+// The `check_mutual_like` trigger creates the matches row automatically —
 // this just checks whether that row now exists for this pair.
 async function checkForMatch(myId, theirId, token) {
   const res = await fetch(
@@ -177,7 +177,7 @@ function computeMatch(myChart, theirChart) {
 // SIGNATURE VISUALS
 // ============================================================
 function ZodiacWheel({ size = 240, opacity = 1, spin = false }) {
-  const glyphs = ['â™ˆ','â™‰','â™Š','â™‹','â™Œ','â™','â™Ž','â™','â™','â™‘','â™’','â™“'];
+  const glyphs = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
   return (
     <svg width={size} height={size} viewBox="0 0 200 200" style={{ opacity, animation: spin ? 'wheelspin 120s linear infinite' : 'none' }}>
       <circle cx="100" cy="100" r="94" fill="none" stroke="#c9a24d" strokeWidth="0.6" />
@@ -253,7 +253,7 @@ function LoginScreen({ onLogin, onGoToSignup }) {
 }
 
 // ============================================================
-// FULL PROFILE VIEW â€” opened from the â“˜ button on a card.
+// FULL PROFILE VIEW — opened from the ⓘ button on a card.
 // Shows photo, name/age, city/distance, bio, hobbies, placements.
 // ============================================================
 function ProfileModal({ profile, onClose }) {
@@ -264,7 +264,7 @@ function ProfileModal({ profile, onClose }) {
           position: 'fixed', top: 18, right: 18, zIndex: 61, width: 38, height: 38, borderRadius: '50%',
           background: 'rgba(10,8,8,0.7)', border: '1px solid rgba(201,162,77,0.5)', color: '#c9a24d',
           fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>âœ•</button>
+        }}>✕</button>
 
         <div style={{ padding: '34px 22px 0', position: 'relative' }}>
           <div style={{ position: 'relative', border: '2px solid #c9a24d', borderRadius: 6, padding: 7, boxShadow: '0 0 24px rgba(201,162,77,0.25)' }}>
@@ -275,11 +275,8 @@ function ProfileModal({ profile, onClose }) {
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0a0808, rgba(10,8,8,0) 45%)' }} />
               <div style={{ position: 'absolute', bottom: 14, left: 22, right: 22 }}>
                 <div style={{ fontFamily: 'Playfair Display, serif', color: '#f2ede2', fontSize: 30, fontWeight: 600 }}>{profile.name}{profile.age ? `, ${profile.age}` : ''}</div>
-                <div style={{ color: '#9d8fa3', fontSize: 13, marginTop: 2 }}>{profile.city}{profile.distance_miles != null ? ` Â· ${profile.distance_miles} mi away` : ''}</div>
+                <div style={{ color: '#9d8fa3', fontSize: 13, marginTop: 2 }}>{profile.city}{profile.distance_miles != null ? ` · ${profile.distance_miles} mi away` : ''}</div>
                 {profile.height_feet != null && <div style={{ color: '#e0bd6f', fontSize: 12.5, marginTop: 3 }}>{profile.height_feet}'{profile.height_inches}"</div>}
-                {profile.height && (
-  <div style={{ color: '#e0bd6f', fontSize: 12.5, marginTop: 3, letterSpacing: 0.3 }}>â†• {profile.height}</div>
-)}
               </div>
             </div>
           </div>
@@ -288,7 +285,7 @@ function ProfileModal({ profile, onClose }) {
         <div style={{ padding: '18px 22px 46px' }}>
         {!profile._isMe && (
             <div style={{ fontFamily: 'Cinzel, serif', color: '#c9a24d', fontSize: 11, letterSpacing: 2 }}>
-              {matchLabel(profile._score).toUpperCase()} Â· {profile._score}/5 ALIGNED
+              {matchLabel(profile._score).toUpperCase()} · {profile._score}/5 ALIGNED
             </div>
           )}
 
@@ -317,7 +314,7 @@ function ProfileModal({ profile, onClose }) {
                 {profile._breakdown.map(b => (
                   <div key={b.planet} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 13 }}>
                     <span style={{ color: '#e6e0d4' }}>{GLYPH[b.planet]} {b.category}</span>
-                    <span style={{ color: b.hit ? '#c9a24d' : '#7a6d80', fontSize: 12 }}>{b.matchSign || 'â€”'} Â· {b.hit ? 'âœ“ aligned' : 'â—‹ friction'}</span>
+                    <span style={{ color: b.hit ? '#c9a24d' : '#7a6d80', fontSize: 12 }}>{b.matchSign || '—'} · {b.hit ? '✓ aligned' : '○ friction'}</span>
                   </div>
                 ))}
               </div>
@@ -406,7 +403,7 @@ function SwipeCard({ profile, onSwipe, isTop, zIndex, onViewProfile }) {
             }}>{matchLabel(profile._score).toUpperCase()}</div>
           </div>
 
-          <div style={{ color: '#d8cfd8', fontSize: 12.5, marginTop: 2, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>{profile.city}{profile.distance_miles != null ? ` Â· ${profile.distance_miles} mi away` : ''}</div>
+          <div style={{ color: '#d8cfd8', fontSize: 12.5, marginTop: 2, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>{profile.city}{profile.distance_miles != null ? ` · ${profile.distance_miles} mi away` : ''}</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginTop: 14 }}>
             {profile._breakdown.map(b => (
@@ -422,7 +419,7 @@ function SwipeCard({ profile, onSwipe, isTop, zIndex, onViewProfile }) {
               {profile._breakdown.map(b => (
                 <div key={b.planet} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}>
                   <span style={{ color: '#e6e0d4' }}>{b.category}</span>
-                  <span style={{ color: b.hit ? '#c9a24d' : '#7a6d80', fontSize: 11 }}>{b.hit ? 'âœ“ aligned' : 'â—‹ friction'}</span>
+                  <span style={{ color: b.hit ? '#c9a24d' : '#7a6d80', fontSize: 11 }}>{b.hit ? '✓ aligned' : '○ friction'}</span>
                 </div>
               ))}
             </div>
@@ -475,11 +472,11 @@ function ChatScreen({ profile, myId, token, onBack }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#0a0808', zIndex: 50, display: 'flex', flexDirection: 'column', maxWidth: 400, margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 16px', borderBottom: '1px solid rgba(201,162,77,0.25)' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#c9a24d', fontSize: 18, cursor: 'pointer' }}>â†</button>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#c9a24d', fontSize: 18, cursor: 'pointer' }}>←</button>
         <div style={{ width: 36, height: 36, borderRadius: '50%', background: profile.photoUrl ? `center/cover no-repeat url(${profile.photoUrl})` : '#2a1e33', border: '1px solid #c9a24d' }} />
         <div>
           <div style={{ fontFamily: 'Playfair Display, serif', color: '#f2ede2', fontSize: 16 }}>{profile.name}</div>
-          <div style={{ fontFamily: 'Cinzel, serif', color: '#c9a24d', fontSize: 9.5, letterSpacing: 1 }}>{profile._score}/5 Â· {matchLabel(profile._score).toUpperCase()}</div>
+          <div style={{ fontFamily: 'Cinzel, serif', color: '#c9a24d', fontSize: 9.5, letterSpacing: 1 }}>{profile._score}/5 · {matchLabel(profile._score).toUpperCase()}</div>
         </div>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -500,7 +497,7 @@ function ChatScreen({ profile, myId, token, onBack }) {
       </div>
       <div style={{ display: 'flex', gap: 8, padding: 14, borderTop: '1px solid rgba(201,162,77,0.25)' }}>
         <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Write something..." style={{ flex: 1, background: '#150f13', border: '1px solid rgba(201,162,77,0.3)', borderRadius: 20, padding: '10px 16px', color: '#e6e0d4', fontSize: 13.5, outline: 'none' }} />
-        <button onClick={send} style={{ background: '#c9a24d', border: 'none', borderRadius: '50%', width: 40, height: 40, color: '#0a0808', cursor: 'pointer', fontSize: 15 }}>âž¤</button>
+        <button onClick={send} style={{ background: '#c9a24d', border: 'none', borderRadius: '50%', width: 40, height: 40, color: '#0a0808', cursor: 'pointer', fontSize: 15 }}>➤</button>
       </div>
     </div>
   );
@@ -629,7 +626,7 @@ const viewMyProfile = async () => {
   if (loadStatus === 'loading' || !myProfile) {
     return (
       <div style={{ minHeight: '100vh', background: '#0a0808', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9d8fa3', fontFamily: 'Cinzel, serif', fontSize: 13, letterSpacing: 1 }}>
-        âœ¦ LOADING YOUR MATCHES...
+        ✦ LOADING YOUR MATCHES...
       </div>
     );
   }
@@ -675,7 +672,7 @@ const viewMyProfile = async () => {
           fontFamily: 'Cinzel, serif', fontSize: 10, letterSpacing: 1, cursor: 'pointer',
         }}
       >
-        âš™ SETTINGS
+        ⚙ SETTINGS
       </button>  
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
@@ -687,9 +684,9 @@ const viewMyProfile = async () => {
       </div>
 
       <button onClick={() => setShowFilters(s => !s)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px solid rgba(201,162,77,0.4)', borderRadius: 20, padding: '6px 16px', color: '#c9a24d', fontFamily: 'Cinzel, serif', fontSize: 10.5, letterSpacing: 1, cursor: 'pointer', marginBottom: 14 }}>
-        âš™ FILTERS Â· {maxDistance} MI Â· AGE {ageRange[0]}â€“{ageRange[1]}
+        ⚙ FILTERS · {maxDistance} MI · AGE {ageRange[0]}–{ageRange[1]}
       </button><button onClick={viewMyProfile} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px solid rgba(201,162,77,0.4)', borderRadius: 20, padding: '6px 16px', color: '#c9a24d', fontFamily: 'Cinzel, serif', fontSize: 10.5, letterSpacing: 1, cursor: 'pointer', marginBottom: 14 }}>
-        â™” MY PROFILE
+        ♔ MY PROFILE
       </button>
 
       {showFilters && (
@@ -699,7 +696,7 @@ const viewMyProfile = async () => {
             <input type="range" min="5" max="100" step="5" value={maxDistance} onChange={e => setMaxDistance(Number(e.target.value))} style={{ width: '100%', accentColor: '#c9a24d' }} />
           </div>
           <div style={{ marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#e6e0d4', fontSize: 12.5, marginBottom: 6 }}><span>Age range</span><span style={{ color: '#c9a24d' }}>{ageRange[0]}â€“{ageRange[1]}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#e6e0d4', fontSize: 12.5, marginBottom: 6 }}><span>Age range</span><span style={{ color: '#c9a24d' }}>{ageRange[0]}–{ageRange[1]}</span></div>
             <div style={{ display: 'flex', gap: 10 }}>
               <input type="range" min="35" max="80" value={ageRange[0]} onChange={e => setAgeRange([Math.min(Number(e.target.value), ageRange[1]), ageRange[1]])} style={{ flex: 1, accentColor: '#c9a24d' }} />
               <input type="range" min="35" max="80" value={ageRange[1]} onChange={e => setAgeRange([ageRange[0], Math.max(Number(e.target.value), ageRange[0])])} style={{ flex: 1, accentColor: '#c9a24d' }} />
