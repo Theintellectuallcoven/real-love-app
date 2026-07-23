@@ -588,7 +588,7 @@ export default function RealLoveSwipeApp({ onGoToSignup }) {
   };
 
   useEffect(() => {
-    if (session && myProfile) loadDeck(maxDistance, ageRange);
+    if (session && myProfile) loadDeck(myProfile.max_distance ?? maxDistance, [myProfile.min_age ?? ageRange[0], myProfile.max_age ?? ageRange[1]]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, myProfile]);
 
