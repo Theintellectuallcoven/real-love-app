@@ -1,14 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Lock, Eye, EyeOff, MapPin, Shield,  Heart, Camera, X, Plus } from 'lucide-react';
+import { computeChart } from './chart';
 
 const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const PLANET_FIELDS = [
-  { key: 'sun', label: 'Sun', glyph: '☉' },
-  { key: 'moon', label: 'Moon', glyph: '☽' },
-  { key: 'mercury', label: 'Mercury', glyph: '☿' },
-  { key: 'venus', label: 'Venus', glyph: '♀' },
-  { key: 'mars', label: 'Mars', glyph: '♂' },
+  { key: 'sun', label: 'Sun', glyph: '☉\uFE0E' },
+  { key: 'moon', label: 'Moon', glyph: '☽\uFE0E' },
+  { key: 'mercury', label: 'Mercury', glyph: '☿\uFE0E' },
+  { key: 'venus', label: 'Venus', glyph: '♀\uFE0E' },
+  { key: 'mars', label: 'Mars', glyph: '♂\uFE0E' },
 ];
 
 const MIN_AGE = 35;
@@ -35,12 +36,12 @@ const COMMUNITY_GUIDELINES = [
 const JEWEL = {
   gold: '#d4af5f',
   goldDeep: '#a97f2e',
-  ruby: '#b3384f',
-  emerald: '#2f9166',
-  sapphire: '#3f6fb0',
-  amethyst: '#8a4fc7',
+  ruby: '#c9a24d',
+  emerald: '#c9a24d',
+  sapphire: '#c9a24d',
+  amethyst: '#c9a24d',
 };
-const PLANET_COLORS = { sun: JEWEL.gold, moon: JEWEL.sapphire, mercury: JEWEL.emerald, venus: JEWEL.ruby, mars: '#c94d4d' };
+const PLANET_COLORS = { sun: JEWEL.gold, moon: JEWEL.sapphire, mercury: JEWEL.emerald, venus: JEWEL.ruby, mars: '#c9a24d' };
 
 function calcAge(birthDateStr) {
   if (!birthDateStr) return null;
@@ -93,6 +94,8 @@ async function realSubmit(form) {
       bio: form.bio,
       hobbies: form.hobbies,
       sun: form.sun, moon: form.moon, mercury: form.mercury, venus: form.venus, mars: form.mars,
+      chart_degrees: form.chartDegrees || {},
+      birth_time: form.birthTime || null,
       guidelines_agreed_at: new Date().toISOString(),
     }),
   });
@@ -142,59 +145,47 @@ async function mockSubmit(form) {
 }
 
 // ============================================================
-// BIRTH CHART CALCULATOR WIRING
-// Point this at your existing Vercel-hosted synastry/birth-chart endpoint
-// (the one using FreeAstroAPI via a serverless proxy). Leave it blank to
-// keep the manual sign dropdowns as a fallback.
-// Expected response shape: { sun, moon, mercury, venus, mars } — each a
-// zodiac sign string like "Scorpio". Adjust the field mapping below if
-// your endpoint returns a different shape.
+// BIRTH CHART CALCULATOR
+// Placements are now computed locally by the in-app astronomy engine
+// (src/chart.js) — no external API or keys. Returns the five signs the app
+// matches on, plus the exact ecliptic degrees used for synastry aspects.
 // ============================================================
-const CHART_CALCULATOR_URL = ''; // e.g. 'https://your-project.vercel.app/api/birth-chart'
-
-async function calculateChart({ birthDate, birthTime, latitude, longitude }) {
-  const res = await fetch(CHART_CALCULATOR_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      date: birthDate,
-      time: birthTime || '12:00', // noon estimate when birth time isn't provided
-      latitude, longitude,
-    }),
-  });
-  if (!res.ok) throw new Error('Chart calculation failed');
-  const data = await res.json();
-  // Adjust these keys if your endpoint's response shape differs.
-  return {
-    sun: data.sun, moon: data.moon, mercury: data.mercury, venus: data.venus, mars: data.mars,
-  };
+function calculateChart({ birthDate, birthTime, latitude, longitude }) {
+  return computeChart({ birthDate, birthTime, latitude, longitude });
+  // -> { sun, moon, mercury, venus, mars, degrees: { Sun, Moon, Mercury, Venus, Mars } }
 }
 
 // ============================================================
 // SIGNATURE VISUAL ELEMENTS
 // ============================================================
 
-function Crown({ size = 22 }) {
+// Official Real Love crown — matches the waitlist logo exactly (three-orb crown
+// with a heart cut out of the center, metallic gold foil gradient). `bg` is the
+// color that shows through the heart cutout; default matches the app background.
+function Crown({ size = 22, bg = '#000000' }) {
   return (
-    <svg width={size} height={size * 0.7} viewBox="0 0 48 34" fill="none">
-      <path d="M4 30 L2 10 L14 20 L24 4 L34 20 L46 10 L44 30 Z" fill="url(#crownGrad)" stroke="#f0d799" strokeWidth="0.8" />
-      <rect x="3" y="29" width="42" height="4" rx="1" fill="url(#crownGrad)" stroke="#f0d799" strokeWidth="0.8" />
-      <circle cx="24" cy="4" r="2.4" fill={JEWEL.ruby} />
-      <circle cx="14" cy="20" r="1.8" fill={JEWEL.sapphire} />
-      <circle cx="34" cy="20" r="1.8" fill={JEWEL.emerald} />
+    <svg width={size} height={size * 0.65} viewBox="0 0 120 78" fill="none">
       <defs>
-        <linearGradient id="crownGrad" x1="0" y1="0" x2="0" y2="34" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#e8c37a" />
-          <stop offset="1" stopColor="#a97f2e" />
+        <linearGradient id="rlCrownFoil" x1="0" y1="0" x2="0.35" y2="1">
+          <stop offset="0%" stopColor="#8A6524" />
+          <stop offset="30%" stopColor="#C9973F" />
+          <stop offset="52%" stopColor="#F7E7BC" />
+          <stop offset="72%" stopColor="#C9973F" />
+          <stop offset="100%" stopColor="#8A6524" />
         </linearGradient>
       </defs>
+      <circle cx="60" cy="7" r="5.4" fill="url(#rlCrownFoil)" />
+      <circle cx="14" cy="20" r="4.4" fill="url(#rlCrownFoil)" />
+      <circle cx="106" cy="20" r="4.4" fill="url(#rlCrownFoil)" />
+      <path fill="url(#rlCrownFoil)" d="M14 24 L36 52 L60 15 L84 52 L106 24 L102 70 Q60 78 18 70 Z" />
+      <path fill={bg} d="M60 44c-3.4-4-9-2.6-9 2.2 0 4 5.2 7.4 9 10.2 3.8-2.8 9-6.2 9-10.2 0-4.8-5.6-6.2-9-2.2z" />
     </svg>
   );
 }
 
 // Small zodiac wheel used as the "Astro Match" footer badge.
 function WheelBadge({ size = 30 }) {
-  const glyphs = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+  const glyphs = ['♈\uFE0E','♉\uFE0E','♊\uFE0E','♋\uFE0E','♌\uFE0E','♍\uFE0E','♎\uFE0E','♏\uFE0E','♐\uFE0E','♑\uFE0E','♒\uFE0E','♓\uFE0E'];
   return (
     <svg width={size} height={size} viewBox="0 0 100 100">
       <circle cx="50" cy="50" r="46" fill="none" stroke="#c9a24d" strokeWidth="1" />
@@ -256,18 +247,18 @@ function StepDots({ step }) {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: 90 }}>
             <div style={{
               width: 34, height: 34, borderRadius: '50%',
-              border: `1.5px solid ${i <= step ? JEWEL.gold : 'rgba(230,224,212,0.25)'}`,
+              border: `1.5px solid ${i <= step ? JEWEL.gold : 'rgba(255,255,255,0.25)'}`,
               background: i < step ? 'linear-gradient(135deg, #e8c37a, #a97f2e)' : 'transparent',
-              color: i < step ? '#0a0808' : (i === step ? JEWEL.gold : '#6b6070'),
+              color: i < step ? '#000000' : (i === step ? JEWEL.gold : '#7a7a7a'),
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'Playfair Display, serif', fontSize: 14, fontWeight: 600,
+              fontFamily: "'Cormorant Garamond', serif", fontSize: 14, fontWeight: 600,
               boxShadow: i === step ? `0 0 14px ${JEWEL.gold}55` : 'none',
             }}>
               {i < step ? '✓' : i + 1}
             </div>
             <div style={{
               fontSize: 9.5, letterSpacing: 1, fontFamily: 'Cinzel, serif',
-              color: i === step ? JEWEL.gold : '#6b6070',
+              color: i === step ? JEWEL.gold : '#7a7a7a',
             }}>
               {label.toUpperCase()}
             </div>
@@ -275,7 +266,7 @@ function StepDots({ step }) {
           {i < STEPS.length - 1 && (
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 44, height: 34, color: i < step ? JEWEL.gold : 'rgba(230,224,212,0.25)',
+              width: 44, height: 34, color: i < step ? JEWEL.gold : 'rgba(255,255,255,0.25)',
               fontSize: 10, letterSpacing: 2,
             }}>
               ✦ ┄ ┄
@@ -293,7 +284,7 @@ function StepDots({ step }) {
 function IconField({ icon: Icon, label, accent, ...props }) {
   return (
     <div>
-      <div style={{ color: accent || '#9d8fa3', fontSize: 10.5, letterSpacing: 1, marginBottom: 6, fontWeight: accent ? 600 : 400 }}>
+      <div style={{ color: accent || '#bdbdbd', fontSize: 10.5, letterSpacing: 1, marginBottom: 6, fontWeight: accent ? 600 : 400 }}>
         {label.toUpperCase()}
       </div>
       <div style={{ position: 'relative' }}>
@@ -308,7 +299,7 @@ function PasswordField({ value, onChange }) {
   const [show, setShow] = useState(false);
   return (
     <div>
-      <div style={{ color: '#9d8fa3', fontSize: 10.5, letterSpacing: 1, marginBottom: 6 }}>PASSWORD</div>
+      <div style={{ color: '#bdbdbd', fontSize: 10.5, letterSpacing: 1, marginBottom: 6 }}>PASSWORD</div>
       <div style={{ position: 'relative' }}>
         <Lock size={15} style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: '#c9a24d', opacity: 0.85 }} />
         <input
@@ -322,7 +313,7 @@ function PasswordField({ value, onChange }) {
           type="button"
           onClick={() => setShow(s => !s)}
           aria-label={show ? 'Hide password' : 'Show password'}
-          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#9d8fa3', cursor: 'pointer', padding: 0, display: 'flex' }}
+          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#bdbdbd', cursor: 'pointer', padding: 0, display: 'flex' }}
         >
           {show ? <EyeOff size={15} /> : <Eye size={15} />}
         </button>
@@ -334,7 +325,7 @@ function PasswordField({ value, onChange }) {
 function PlainField({ label, children }) {
   return (
     <div>
-      <div style={{ color: '#9d8fa3', fontSize: 10.5, letterSpacing: 1, marginBottom: 6 }}>{label.toUpperCase()}</div>
+      <div style={{ color: '#bdbdbd', fontSize: 10.5, letterSpacing: 1, marginBottom: 6 }}>{label.toUpperCase()}</div>
       {children}
     </div>
   );
@@ -343,7 +334,7 @@ function PlainField({ label, children }) {
 function CardHeading({ children }) {
   return (
     <div style={{ textAlign: 'center', marginBottom: 22 }}>
-      <div style={{ fontFamily: 'Playfair Display, serif', color: '#f2ede2', fontSize: 24, fontWeight: 700 }}>{children}</div>
+      <div style={{ fontFamily: "'Cormorant Garamond', serif", color: '#ffffff', fontSize: 27.4, fontWeight: 700 }}>{children}</div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 10, color: JEWEL.gold, opacity: 0.7 }}>
         <div style={{ width: 50, height: 1, background: 'linear-gradient(90deg, transparent, currentColor)' }} />
         <span style={{ fontSize: 10 }}>✦</span>
@@ -359,6 +350,7 @@ export default function SignupScreen() {
     name: '', email: '', password: '', birthDate: '', birthTime: '', city: '', tagline: '',
     gender: '',
     sun: '', moon: '', mercury: '', venus: '', mars: '',
+    chartDegrees: {}, // exact ecliptic longitudes from the chart engine (for synastry aspects)
     latitude: null, longitude: null,
     bio: '', hobbies: [], photos: [], // photos: array of { dataUrl, file } for preview + upload
   });
@@ -412,21 +404,24 @@ export default function SignupScreen() {
   // Falls back to manual sign selection if no location was captured, if no
   // calculator URL is configured yet, or if the call itself fails.
   const runChartCalculation = async () => {
-    if (!CHART_CALCULATOR_URL) { setChartStatus('manual'); return; }
-    if (form.latitude == null || form.longitude == null) {
-      setChartStatus('manual');
-      setChartError('We need your location (from step 2) to calculate your chart precisely — switching to manual entry.');
-      return;
-    }
+    if (!form.birthDate) { setChartStatus('manual'); return; }
     setChartStatus('calculating');
     setChartError('');
     try {
-      const result = await calculateChart({
+      const result = calculateChart({
         birthDate: form.birthDate, birthTime: form.birthTime,
         latitude: form.latitude, longitude: form.longitude,
       });
-      setForm(f => ({ ...f, ...result }));
+      setForm(f => ({
+        ...f,
+        sun: result.sun, moon: result.moon, mercury: result.mercury,
+        venus: result.venus, mars: result.mars,
+        chartDegrees: result.degrees,
+      }));
       setChartStatus('success');
+      if (form.latitude == null || form.longitude == null) {
+        setChartError('Add your birth location and time for the most precise Moon placement.');
+      }
     } catch (e) {
       setChartStatus('manual');
       setChartError('Couldn\u2019t reach the chart calculator — enter your placements manually below.');
@@ -491,7 +486,7 @@ export default function SignupScreen() {
 
   const fontImport = (
     <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Dancing+Script:wght@600&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Montserrat:wght@400;500;600&family=Dancing+Script:wght@600&display=swap');
       input, select { font-family: inherit; }
       input::placeholder { color: #5f5852; }
       input:focus, select:focus { border-color: #c9a24d !important; }
@@ -507,10 +502,10 @@ export default function SignupScreen() {
           <div style={{ fontFamily: 'Cinzel, serif', color: JEWEL.gold, fontSize: 12, letterSpacing: 3, marginTop: 16, marginBottom: 10 }}>
             WELCOME TO REAL LOVE
           </div>
-          <div style={{ fontFamily: 'Playfair Display, serif', color: '#f2ede2', fontSize: 28, fontWeight: 700 }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", color: '#ffffff', fontSize: 31.9, fontWeight: 700 }}>
             {form.name}, your chart is on file.
           </div>
-          <div style={{ color: '#9d8fa3', fontSize: 13, marginTop: 12, lineHeight: 1.6 }}>
+          <div style={{ color: '#bdbdbd', fontSize: 13, marginTop: 12, lineHeight: 1.6 }}>
             {SUPABASE_URL ? 'Your profile was saved to Supabase.' : 'Demo mode — no real account was created.'}
           </div>
         </div>
@@ -532,7 +527,7 @@ export default function SignupScreen() {
         <div style={{ position: 'relative', zIndex: 2, maxWidth: 260 }}>
           <Crown size={30} />
           <div style={{
-            fontFamily: 'Playfair Display, serif', fontWeight: 700, fontSize: '2.6rem', lineHeight: 0.95,
+            fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: '2.6rem', lineHeight: 0.95,
             marginTop: 6,
             background: `linear-gradient(180deg, #e8c37a, ${JEWEL.goldDeep})`,
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
@@ -547,7 +542,7 @@ export default function SignupScreen() {
             <Heart size={12} fill="currentColor" />
             <div style={{ width: 40, height: 1, background: 'currentColor' }} />
           </div>
-          <div style={{ fontFamily: 'Cinzel, serif', color: '#f2ede2', fontSize: 13, letterSpacing: 1.5, lineHeight: 1.8 }}>
+          <div style={{ fontFamily: 'Cinzel, serif', color: '#ffffff', fontSize: 13, letterSpacing: 1.5, lineHeight: 1.8 }}>
             35 AND UP<br/>INTELLECTUAL SINGLES
           </div>
         </div>
@@ -573,7 +568,7 @@ export default function SignupScreen() {
                     onChange={e => setAgreedToGuidelines(e.target.checked)}
                     style={{ marginTop: 2, accentColor: JEWEL.gold, width: 15, height: 15, flexShrink: 0 }}
                   />
-                  <span style={{ fontSize: 12, color: '#e6e0d4', lineHeight: 1.5 }}>
+                  <span style={{ fontSize: 12, color: '#ffffff', lineHeight: 1.5 }}>
                     I agree to the{' '}
                     <span
                       onClick={(e) => { e.preventDefault(); setShowGuidelines(s => !s); }}
@@ -618,7 +613,7 @@ export default function SignupScreen() {
                           flex: 1,
                           background: selected ? 'linear-gradient(135deg, #e8c37a, #a97f2e)' : 'transparent',
                           border: `1px solid ${selected ? JEWEL.gold : 'rgba(201,162,77,0.35)'}`,
-                          color: selected ? '#0a0808' : '#e6e0d4',
+                          color: selected ? '#000000' : '#ffffff',
                           fontFamily: 'Cinzel, serif', fontSize: 12, letterSpacing: 1.5,
                           padding: '13px 0', borderRadius: 6, cursor: 'pointer',
                         }}
@@ -630,7 +625,7 @@ export default function SignupScreen() {
                 </div>
               </PlainField>
               {form.gender && (
-                <div style={{ fontSize: 11, color: '#6b6070', marginTop: -10, lineHeight: 1.5 }}>
+                <div style={{ fontSize: 11, color: '#7a7a7a', marginTop: -10, lineHeight: 1.5 }}>
                   You'll see {form.gender === 'man' ? 'women' : 'men'} in your deck, and you'll only appear in theirs.
                 </div>
               )}
@@ -639,7 +634,7 @@ export default function SignupScreen() {
                 <input style={inputStyle} type="date" value={form.birthDate} onChange={e => update('birthDate', e.target.value)} />
               </PlainField>
               {age !== null && (
-                <div style={{ fontSize: 12.5, marginTop: -10, color: underAge ? '#c9899f' : '#9d8fa3' }}>
+                <div style={{ fontSize: 12.5, marginTop: -10, color: underAge ? '#ffffff' : '#bdbdbd' }}>
                   {underAge
                     ? `Members must be ${MIN_AGE} or older to join Real Love. You entered an age of ${age}.`
                     : `Age ${age} — eligible to join.`}
@@ -648,7 +643,7 @@ export default function SignupScreen() {
               <PlainField label="Birth time (optional, improves chart accuracy)">
                 <input style={inputStyle} type="time" value={form.birthTime} onChange={e => update('birthTime', e.target.value)} />
               </PlainField>
-              <div style={{ fontSize: 11, color: '#6b6070', marginTop: -10, lineHeight: 1.5 }}>
+              <div style={{ fontSize: 11, color: '#7a7a7a', marginTop: -10, lineHeight: 1.5 }}>
                 Exact birth time lets us calculate your Moon, Mercury, Venus &amp; Mars precisely. Without it, we'll estimate using noon.
               </div>
               <PlainField label="City">
@@ -671,12 +666,12 @@ export default function SignupScreen() {
                 {locationStatus === 'requesting' ? 'DETECTING LOCATION...' : locationStatus === 'success' ? 'LOCATION DETECTED' : 'USE MY LOCATION'}
               </button>
               {locationStatus === 'success' && (
-                <div style={{ fontSize: 11.5, color: '#9d8fa3', marginTop: -8, textAlign: 'center' }}>
+                <div style={{ fontSize: 11.5, color: '#bdbdbd', marginTop: -8, textAlign: 'center' }}>
                   This lets us show you matches by real distance, up to 100 miles away.
                 </div>
               )}
               {locationStatus === 'error' && (
-                <div style={{ fontSize: 11.5, color: '#c9899f', marginTop: -8, textAlign: 'center' }}>
+                <div style={{ fontSize: 11.5, color: '#ffffff', marginTop: -8, textAlign: 'center' }}>
                   {locationError}
                 </div>
               )}
@@ -691,8 +686,12 @@ export default function SignupScreen() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <CardHeading>Your chart</CardHeading>
 
+              <div style={{ textAlign: 'center', color: '#bdbdbd', fontSize: 12.5, lineHeight: 1.6, fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', margin: '-4px 4px 4px' }}>
+                Real Love uses the exact placements in your birth chart — your Sun, Moon, Mercury, Venus &amp; Mars — to calculate your cosmic compatibility and match you with your ideal partner.
+              </div>
+
               {chartStatus === 'calculating' && (
-                <div style={{ textAlign: 'center', color: '#9d8fa3', fontSize: 12.5, padding: '10px 0' }}>
+                <div style={{ textAlign: 'center', color: '#bdbdbd', fontSize: 12.5, padding: '10px 0' }}>
                   ✦ Calculating your chart from birth date, time &amp; location...
                 </div>
               )}
@@ -704,7 +703,7 @@ export default function SignupScreen() {
               )}
 
               {chartStatus === 'manual' && chartError && (
-                <div style={{ color: '#c9899f', fontSize: 11.5, textAlign: 'center', marginTop: -6 }}>
+                <div style={{ color: '#ffffff', fontSize: 11.5, textAlign: 'center', marginTop: -6 }}>
                   {chartError}
                 </div>
               )}
@@ -730,7 +729,7 @@ export default function SignupScreen() {
                 <button
                   type="button"
                   onClick={() => setChartStatus('manual')}
-                  style={{ background: 'none', border: 'none', color: '#6b6070', fontSize: 11, textDecoration: 'underline', cursor: 'pointer', marginTop: 2 }}
+                  style={{ background: 'none', border: 'none', color: '#7a7a7a', fontSize: 11, textDecoration: 'underline', cursor: 'pointer', marginTop: 2 }}
                 >
                   Adjust manually
                 </button>
@@ -743,21 +742,21 @@ export default function SignupScreen() {
               <CardHeading>Your profile</CardHeading>
 
               <div>
-                <div style={{ color: '#9d8fa3', fontSize: 10.5, letterSpacing: 1, marginBottom: 8 }}>
-                  PHOTOS ({form.photos.length}/{MAX_PHOTOS})
+                <div style={{ color: '#bdbdbd', fontSize: 10.5, letterSpacing: 1, marginBottom: 8 }}>
+                  PICTURE ME ({form.photos.length}/{MAX_PHOTOS})
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
                   {form.photos.map((p, i) => (
                     <div key={i} style={{ position: 'relative', aspectRatio: '1', borderRadius: 6, overflow: 'hidden', border: `1.5px solid ${i === 0 ? JEWEL.gold : 'rgba(201,162,77,0.35)'}` }}>
                       <img src={p.dataUrl} alt={`Profile ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                       {i === 0 && (
-                        <div style={{ position: 'absolute', top: 2, left: 2, background: JEWEL.gold, color: '#0a0808', fontSize: 7, fontFamily: 'Cinzel, serif', padding: '1px 4px', borderRadius: 2 }}>MAIN</div>
+                        <div style={{ position: 'absolute', top: 2, left: 2, background: JEWEL.gold, color: '#000000', fontSize: 7, fontFamily: 'Cinzel, serif', padding: '1px 4px', borderRadius: 2 }}>MAIN</div>
                       )}
                       <button
                         type="button"
                         onClick={() => removePhoto(i)}
                         aria-label="Remove photo"
-                        style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(10,8,8,0.75)', border: 'none', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e6e0d4', cursor: 'pointer' }}
+                        style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.75)', border: 'none', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', cursor: 'pointer' }}
                       >
                         <X size={11} />
                       </button>
@@ -775,13 +774,13 @@ export default function SignupScreen() {
                     </label>
                   )}
                 </div>
-                <div style={{ color: '#6b6070', fontSize: 10.5, marginTop: 8 }}>
+                <div style={{ color: '#7a7a7a', fontSize: 10.5, marginTop: 8 }}>
                   Add at least 1 photo (up to 5). Your first photo is shown as your main profile picture.
                 </div>
               </div>
 
               <div>
-                <div style={{ color: '#9d8fa3', fontSize: 10.5, letterSpacing: 1, marginBottom: 8 }}>HOBBIES</div>
+                <div style={{ color: '#bdbdbd', fontSize: 10.5, letterSpacing: 1, marginBottom: 8 }}>HOBBIES</div>
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                   <input
                     style={inputStyle}
@@ -800,11 +799,11 @@ export default function SignupScreen() {
                     {form.hobbies.map(h => (
                       <span key={h} style={{
                         display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(201,162,77,0.12)',
-                        border: '1px solid rgba(201,162,77,0.3)', color: '#e6e0d4', borderRadius: 20,
+                        border: '1px solid rgba(201,162,77,0.3)', color: '#ffffff', borderRadius: 20,
                         padding: '4px 10px', fontSize: 12,
                       }}>
                         {h}
-                        <X size={11} style={{ cursor: 'pointer', color: '#9d8fa3' }} onClick={() => removeHobby(h)} />
+                        <X size={11} style={{ cursor: 'pointer', color: '#bdbdbd' }} onClick={() => removeHobby(h)} />
                       </span>
                     ))}
                   </div>
@@ -819,7 +818,7 @@ export default function SignupScreen() {
                   rows={5}
                   style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }}
                 />
-                <div style={{ textAlign: 'right', color: '#6b6070', fontSize: 10.5, marginTop: 4 }}>
+                <div style={{ textAlign: 'right', color: '#7a7a7a', fontSize: 10.5, marginTop: 4 }}>
                   {form.bio.length}/400
                 </div>
               </PlainField>
@@ -828,7 +827,7 @@ export default function SignupScreen() {
 
           {status === 'error' && (
             <div style={{
-              background: 'rgba(163,118,143,0.12)', border: '1px solid rgba(163,118,143,0.4)',
+              background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.4)',
               borderRadius: 4, padding: '10px 14px', color: '#c9a3b5', fontSize: 12.5, marginTop: 16,
             }}>
               {errorMsg}
@@ -838,8 +837,8 @@ export default function SignupScreen() {
           <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
             {step > 0 && (
               <button onClick={() => setStep(s => s - 1)} style={{
-                flex: '0 0 auto', background: 'transparent', border: '1px solid rgba(230,224,212,0.3)',
-                color: '#e6e0d4', fontFamily: 'Cinzel, serif', fontSize: 12.5, letterSpacing: 1,
+                flex: '0 0 auto', background: 'transparent', border: '1px solid rgba(255,255,255,0.3)',
+                color: '#ffffff', fontFamily: 'Cinzel, serif', fontSize: 12.5, letterSpacing: 1,
                 padding: '13px 20px', borderRadius: 4, cursor: 'pointer',
               }}>BACK</button>
             )}
@@ -849,7 +848,7 @@ export default function SignupScreen() {
                 disabled={!stepValid[step]}
                 style={{
                   flex: 1, background: stepValid[step] ? 'linear-gradient(135deg, #e8c37a, #a97f2e)' : 'rgba(201,162,77,0.25)', border: 'none',
-                  color: '#0a0808', fontFamily: 'Cinzel, serif', fontSize: 14, letterSpacing: 2,
+                  color: '#000000', fontFamily: 'Cinzel, serif', fontSize: 14, letterSpacing: 2,
                   padding: '15px 0', borderRadius: 4, cursor: stepValid[step] ? 'pointer' : 'not-allowed',
                 }}
               >CONTINUE</button>
@@ -859,7 +858,7 @@ export default function SignupScreen() {
                 disabled={!stepValid[STEPS.length - 1] || status === 'submitting'}
                 style={{
                   flex: 1, background: stepValid[STEPS.length - 1] ? 'linear-gradient(135deg, #e8c37a, #a97f2e)' : 'rgba(201,162,77,0.25)', border: 'none',
-                  color: '#0a0808', fontFamily: 'Cinzel, serif', fontSize: 14, letterSpacing: 2,
+                  color: '#000000', fontFamily: 'Cinzel, serif', fontSize: 14, letterSpacing: 2,
                   padding: '15px 0', borderRadius: 4, cursor: stepValid[STEPS.length - 1] ? 'pointer' : 'not-allowed',
                 }}
               >{status === 'submitting' ? 'JOINING...' : 'JOIN REAL LOVE'}</button>
@@ -868,7 +867,7 @@ export default function SignupScreen() {
         </div>
 
         {!SUPABASE_URL && (
-          <div style={{ textAlign: 'center', color: '#6b6070', fontSize: 10.5, marginTop: 14 }}>
+          <div style={{ textAlign: 'center', color: '#7a7a7a', fontSize: 10.5, marginTop: 14 }}>
             Demo mode — add SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in the code to save real accounts.
           </div>
         )}
@@ -877,11 +876,11 @@ export default function SignupScreen() {
         <div style={{ textAlign: 'center', marginTop: 34 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: JEWEL.gold, fontFamily: 'Cinzel, serif', fontSize: 10.5, letterSpacing: 2 }}>
             <Heart size={9} fill="currentColor" />
-            <span>WRITTEN IN THE STARS. MATCHED BY LOVE.</span>
+            <span>WRITTEN IN THE STARS. CONNECTED BY SYNASTRY.</span>
             <Heart size={9} fill="currentColor" />
           </div>
           <div style={{ fontFamily: 'Dancing Script, cursive', color: JEWEL.gold, fontSize: 20, marginTop: 6 }}>
-            You can still match.
+            Real conversations · Real connections · Real love
           </div>
         </div>
 
@@ -908,7 +907,7 @@ function FooterItem({ icon, title, desc, border }) {
     }}>
       <div style={{ color: JEWEL.gold, display: 'flex', justifyContent: 'center', marginBottom: 10 }}>{icon}</div>
       <div style={{ fontFamily: 'Cinzel, serif', color: JEWEL.gold, fontSize: 10.5, letterSpacing: 1, marginBottom: 8 }}>{title}</div>
-      <div style={{ color: '#9d8fa3', fontSize: 11, lineHeight: 1.6 }}>{desc}</div>
+      <div style={{ color: '#bdbdbd', fontSize: 11, lineHeight: 1.6 }}>{desc}</div>
     </div>
   );
 }
@@ -917,9 +916,9 @@ const wrap = {
   minHeight: '100vh', width: '100%',
   background: `
     radial-gradient(ellipse 550px 320px at 20% 8%, rgba(232,181,102,0.10), transparent),
-    radial-gradient(ellipse 500px 300px at 85% 12%, rgba(212,77,77,0.08), transparent),
-    #0a0808`,
-  fontFamily: 'system-ui, sans-serif',
+    radial-gradient(ellipse 500px 300px at 85% 12%, rgba(201,162,77,0.08), transparent),
+    #000000`,
+  fontFamily: "'Montserrat', system-ui, sans-serif",
   position: 'relative', overflow: 'hidden', paddingBottom: 20,
 };
 
@@ -929,12 +928,12 @@ const heroWrap = {
   display: 'flex',
   alignItems: 'center',
   padding: '50px 26px',
-  background: `linear-gradient(90deg, rgba(8,6,6,0.75) 30%, rgba(8,6,6,0.15) 75%), url('couple-hero.png') center 20% / cover no-repeat`,
+  background: `linear-gradient(90deg, rgba(0,0,0,0.75) 30%, rgba(0,0,0,0.15) 75%), url('couple-hero.png') center 20% / cover no-repeat`,
   overflow: 'hidden',
 };
 
 const cardStyle = {
-  background: 'rgba(15,10,13,0.8)',
+  background: 'rgba(8,8,8,0.8)',
   border: '1px solid rgba(212,175,95,0.35)', borderRadius: 12,
   padding: '32px 26px', backdropFilter: 'blur(4px)',
   boxShadow: '0 30px 80px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(212,175,95,0.08)',
@@ -943,6 +942,6 @@ const cardStyle = {
 const inputStyle = {
   width: '100%', boxSizing: 'border-box', background: '#0f0a0d',
   border: '1px solid rgba(201,162,77,0.35)', borderRadius: 6,
-  padding: '12px 13px', color: '#e6e0d4', fontSize: 13.5, outline: 'none',
+  padding: '12px 13px', color: '#ffffff', fontSize: 13.5, outline: 'none',
   transition: 'border-color 0.15s',
 };
